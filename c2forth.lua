@@ -90,7 +90,7 @@ function typedefs(f)
         local regs = {}
         periphs[name] = regs
         local offset = 0
-        for bits, name, comment in guts:gmatch "uint(%d+)_t%s+(%S+);%s+/%*!<(..-)%*/" do
+        for bits, name, comment in guts:gmatch "uint(%d+)_t%s*(%S+);%s*/%*!<(..-)%*/" do
             --print(fmt("%x %s | %s", offset, name, comment))
             local reg = { name = name, offset = offset, comment = comment }
             array = name:match "%[(%d+)%]"
@@ -112,7 +112,7 @@ function typedefs(f)
 end
 
 function eval(base, e)
-    e = e:gsub("%(uint32_t%)", "")
+    e = e:gsub("%(%s*uint32_t%s*%)", "")
     -- Match basename + offset
     local b, offset = e:match "([%w_]+_BASE) %+ 0x(%x+)"
     if b then
