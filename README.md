@@ -23,6 +23,8 @@ typedef code needs to be smarter about several things. It needs to:
 * when a "register" is a sub-typedef, the sub-typedef needs to get instantiated
   recursively - and if it is an array, several times.
 
+Also might be worth trying the STM32FxCube stuff to see what's there.
+
 # Mistakes?
 
 It seems like the typedef for TIM in the STM32F303 .h file is wrong. There
