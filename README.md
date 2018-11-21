@@ -1,13 +1,18 @@
 # Intro
 
-This repo contains chip equates downloaded and extracted from [ST's "standard
-peripheral library" zip archives](https://www.st.com/content/st_com/en/products/embedded-software/mcus-embedded-software/stm32-embedded-software/stm32-standard-peripheral-libraries.html).
+Let's try to take ST's C sources (well, the .h files anyway) and turn them into
+Forth.
 
-I only unzip'd the <chip>/CMSIS/Include/ and <chip>/CMSIS/Device/Include/
-directories. There is a lot of documentation, sample code, and (binary)
-libraries in there as well. Each type (F0, F3, F4, L1) was a 75 MB zip file!
+We are now using the [STM32Cube zip
+files](https://www.st.com/en/embedded-software/stm32cube-mcu-packages.html).
+The ["standard peripheral library" zip
+archives](https://www.st.com/content/st_com/en/products/embedded-software/mcus-embedded-software/stm32-embedded-software/stm32-standard-peripheral-libraries.html)
+have been deprecated.
 
-Using CPP and Lua I hope to transform these into useful muforth equates.
+I unzip'd only the <chip>/CMSIS/Device/Include/ directories. There is a lot of
+documentation, sample code, and (binary) libraries in there as well.
+
+Using Lua I hope to transform these into useful muforth equates.
 
 # TODO
 
@@ -23,10 +28,11 @@ typedef code needs to be smarter about several things. It needs to:
 * when a "register" is a sub-typedef, the sub-typedef needs to get instantiated
   recursively - and if it is an array, several times.
 
-Also might be worth trying the STM32FxCube stuff to see what's there.
-
 # Mistakes?
 
-It seems like the typedef for TIM in the STM32F303 .h file is wrong. There
-should be a uint16_t of padding item before the CCMR3. Their comment suggests
-that this should be the case, but it's missing from the typedef!
+It seems like the comments (with offsets) for the OB typedef in the F103 is
+wrong. But the offsets (that I calculated from the types in the typedef) match
+several of the other parts! Go figure.
+
+The TIM typedef in the STM32F303 .h file was wrong in the "standard peripheral
+lib" version. That has been fixed in the STM32Cube version.
