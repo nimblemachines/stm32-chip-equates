@@ -3,13 +3,12 @@
 
 fmt = string.format
 
--- Special edits file contents to make things easier later. See NOTES for
+-- fixes() changes file contents to make things easier later. See NOTES for
 -- explanation(s).
-function special(f)
-    -- HRTIM_TypeDef *     => HRTIM_Master_TypeDef *
-    -- HRTIM_TIM_TypeDef * => HRTIM_Timerx_TypeDef *
+function fixes(f)
     f = f:gsub("HRTIM_TypeDef %*", "HRTIM_Master_TypeDef *")
          :gsub("HRTIM_TIM_TypeDef %*", "HRTIM_Timerx_TypeDef *")
+         :gsub("(uint32_t FR2;%s*/%*!< CAN Filter bank register )(1)( %*/)", "%12%3")
     return f
 end
 
@@ -50,24 +49,42 @@ function typedefs(f)
         local regs = {}
         periphs[name] = regs
         local offset = 0
-        for bits, name, comment in fixedguts:gmatch "uint(%d+)_t%s*(%S+);(.-)\n" do
+        for ctype, name, comment in fixedguts:gmatch "([%w_]+)%s+(%S+);(.-)\n" do
             comment = prettify_comment(comment)
             --print(fmt("%x %s %s", offset, name, comment))
             local reg = { name = name, offset = offset, comment = comment }
-            array = name:match "%[(%d+)%]"
-            if array then
-                offset = offset + (tonumber(array) * tonumber(bits)/8)
-                -- Remove array part from name
-                reg.name = reg.name:gsub("%[%d+%]", "")
+            local size = 4  -- sanity
+            local bits = ctype:match "uint(%d+)_t"
+            if bits then
+                size = tonumber(bits)/8
             else
-                offset = offset + tonumber(bits)/8
+                local struct = ctype:match "(.+)_TypeDef"
+                if struct then
+                    size = periphs[struct].size
+                    reg.struct = periphs[struct]
+                else
+                    print("Hmm. Couldn't figure out size of %s", name)
+                end
+            end
+
+            local array = name:match "%[(%d+)%]"
+            if array then
+                array = tonumber(array)
+                reg.array = array   -- number of entries in array
+                reg.size = size     -- size of each
+                reg.name = reg.name:gsub("%[(%d+)%]", "")
+                offset = offset + (array * size)
+            else
+                offset = offset + size
             end
             if name:match "RESERVED" then
+                -- Tell GC to throw it away
                 reg = nil
             else
                 regs[#regs+1] = reg
             end
         end
+        periphs[name].size = offset
     end
     return periphs
 end
@@ -115,13 +132,32 @@ function vectors(exc)
 end
 
 function instantiate(f, base, periphs)
+    local print_reg, print_regs
+    print_reg = function(r, pname, subscript, pbase)
+        if r.struct then
+            print_regs(r.struct, pname .. "." .. r.name .. subscript, pbase + r.offset)
+        else
+            print(fmt("%s equ %-26s %s", muhex(r.offset + pbase),
+                pname .. "." .. r.name .. subscript, r.comment))
+        end
+    end
+    print_regs = function(regs, pname, pbase)
+        for _, r in ipairs(regs) do
+            if r.array then
+                for i = 0, r.array - 1 do
+                    print_reg(r, pname, fmt("%d", i), pbase + (i * r.size))
+                end
+            else
+                print_reg(r, pname, "", pbase)
+            end
+        end
+    end
+
     for pname, ptype, pbase in f:gmatch
         "#define%s+([%w_]+)%s+%(%(([%w_]+)_TypeDef %*%)%s*([%w_]+)%)" do
         print()
         --print(fmt("instantiate: %s %s %s", pname, ptype, pbase))
-        for _, r in ipairs(periphs[ptype]) do
-            print(fmt("%s equ %-20s %s", muhex(r.offset + base[pbase]), pname .. "." .. r.name, r.comment))
-        end
+        print_regs(periphs[ptype], pname, base[pbase])
     end
 end
 
@@ -136,7 +172,7 @@ function read_file(fname)
 end
 
 function doit()
-    local f = special(read_file(arg[1]))
+    local f = fixes(read_file(arg[1]))
     local exc = exceptions(f)
     local periphs = typedefs(f)
     local base = base_addrs(f)
