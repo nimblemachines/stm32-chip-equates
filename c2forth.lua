@@ -1,7 +1,16 @@
--- Impossible task of reading chip .h file and trying to generate
--- Forth-style equates.
+-- Impossible task of parsing chip .h files and trying to generate
+-- Forth-style equates from them.
 
 fmt = string.format
+
+-- Special edits to make things easier later. See NOTES for explanation(s).
+function special(s)
+    -- HRTIM_TypeDef *     => HRTIM_Master_TypeDef *
+    -- HRTIM_TIM_TypeDef * => HRTIM_Timerx_TypeDef *
+    s = s:gsub("HRTIM_TypeDef %*", "HRTIM_Master_TypeDef *")
+         :gsub("HRTIM_TIM_TypeDef %*", "HRTIM_Timerx_TypeDef *")
+    return s
+end
 
 function hex(s)
     return tonumber(s, 16)
@@ -100,7 +109,7 @@ function read_file(fname)
 end
 
 function doit()
-    local f = read_file(arg[1])
+    local f = special(read_file(arg[1]))
     local periphs = typedefs(f)
     local base = base_addrs(f)
     print(fmt("( Chip equates for %s)", arg[1]:match "^[%w]+"))

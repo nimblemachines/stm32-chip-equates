@@ -1,0 +1,45 @@
++---------------------- From the STM32F334 .h file: -----------------------+
+
+/* HRTIM  register definition */
+typedef struct {
+  HRTIM_Master_TypeDef sMasterRegs;
+  HRTIM_Timerx_TypeDef sTimerxRegs[5];
+  uint32_t             RESERVED0[32];
+  HRTIM_Common_TypeDef sCommonRegs;
+}HRTIM_TypeDef;
+
+#define HRTIM1_BASE           (APB2PERIPH_BASE + 0x00007400U)
+#define HRTIM1_TIMA_BASE      (HRTIM1_BASE + 0x00000080U)
+#define HRTIM1_TIMB_BASE      (HRTIM1_BASE + 0x00000100U)
+#define HRTIM1_TIMC_BASE      (HRTIM1_BASE + 0x00000180U)
+#define HRTIM1_TIMD_BASE      (HRTIM1_BASE + 0x00000200U)
+#define HRTIM1_TIME_BASE      (HRTIM1_BASE + 0x00000280U)
+#define HRTIM1_COMMON_BASE    (HRTIM1_BASE + 0x00000380U)
+
+#define HRTIM1              ((HRTIM_TypeDef *) HRTIM1_BASE)
+#define HRTIM1_TIMA         ((HRTIM_TIM_TypeDef *) HRTIM1_TIMA_BASE)
+#define HRTIM1_TIMB         ((HRTIM_TIM_TypeDef *) HRTIM1_TIMB_BASE)
+#define HRTIM1_TIMC         ((HRTIM_TIM_TypeDef *) HRTIM1_TIMC_BASE)
+#define HRTIM1_TIMD         ((HRTIM_TIM_TypeDef *) HRTIM1_TIMD_BASE)
+#define HRTIM1_TIME         ((HRTIM_TIM_TypeDef *) HRTIM1_TIME_BASE)
+#define HRTIM1_COMMON       ((HRTIM_Common_TypeDef *) HRTIM1_COMMON_BASE)
+
++---------------------- end .h file excerpt -------------------------------+
+
+While I've elided the typedefs for HRTIM_Master_TypeDef and
+HRTIM_Timerx_TypeDef, both have length 0x80. You'll notice in the HRTIM1_x_BASE
+defines that TIMA starts 0x80 after HRTIM1_BASE, TIMB starts 0x80 after TIMA,
+etc. The RESERVED0[32] puts 0x80 of space between TIME and the start of the
+COMMON regs - and their BASE addresses are, indeed, 0x100 apart.
+
+The point really is that ST are not using the HRTIM_TypeDef at all. What gets
+instantiated at HRTIM1_BASE is really HRTIM_Master_TypeDef, not HRTIM_TypeDef,
+since each of the constituent parts gets its own BASE address.
+
+So the c2forth.lua code should catch this as a special case, ignore
+HRTIM_TypeDef, and just use HRTIM_Master_TypeDef instead.
+
+Or maybe I should edit the .h files, and send a patch to ST?
+
+Unfortunately, while I've dodged a bullet in the case of HRTIM, the CAN
+typedefs really do nest and really do need to be recursively instantiated.
