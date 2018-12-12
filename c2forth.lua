@@ -3,13 +3,14 @@
 
 fmt = string.format
 
--- Special edits to make things easier later. See NOTES for explanation(s).
-function special(s)
+-- Special edits file contents to make things easier later. See NOTES for
+-- explanation(s).
+function special(f)
     -- HRTIM_TypeDef *     => HRTIM_Master_TypeDef *
     -- HRTIM_TIM_TypeDef * => HRTIM_Timerx_TypeDef *
-    s = s:gsub("HRTIM_TypeDef %*", "HRTIM_Master_TypeDef *")
+    f = f:gsub("HRTIM_TypeDef %*", "HRTIM_Master_TypeDef *")
          :gsub("HRTIM_TIM_TypeDef %*", "HRTIM_Timerx_TypeDef *")
-    return s
+    return f
 end
 
 function hex(s)
@@ -23,9 +24,27 @@ function prettify_comment(c)
     return c
 end
 
+-- XXX ST defines the Cortex-M vectors with negative vector indices. Do we
+-- want to keep it this way? Or start the chip-specific ones at 16 instead
+-- of 0?
+function exceptions(f)
+    local exc = {}
+    local guts = f:match "typedef enum(..-)IRQn_Type;"
+    if guts then
+        for name, vector, comment in guts:gmatch "([%w_]+)_IRQn%s*=%s*(%-?%d+),(.-)\n" do
+            comment = prettify_comment(comment)
+            --print(fmt("%s %d %s", name, tonumber(vector), comment))
+            exc[#exc+1] = { name = name, vector = vector, comment = comment }
+        end
+    else
+        print("Hmm. No IRQn_Type was found.")
+    end
+    return exc
+end
+
 function typedefs(f)
     local periphs = {}
-    for guts, name in f:gmatch("typedef struct(..-)([%w_]+)_TypeDef;") do
+    for guts, name in f:gmatch "typedef struct(..-)([%w_]+)_TypeDef;" do
         local fixedguts = guts:gsub("/%*!<([^*]-) *\n *(.-) *(Address.-)%*/", "/*!<%1 %2 %3*/")
         --print(fmt("%s: %s: %s", name, guts, fixedguts))
         local regs = {}
@@ -87,6 +106,14 @@ function muhex(num)
     return fmt("%04x_%04x", num >> 16, num % (2^16))
 end
 
+function vectors(exc)
+    print("\n( Vectors)\ndecimal")
+    for _, e in ipairs(exc) do
+        print(fmt("%3d vector %-20s %s", e.vector, e.name, e.comment))
+    end
+    print("hex")
+end
+
 function instantiate(f, base, periphs)
     for pname, ptype, pbase in f:gmatch
         "#define%s+([%w_]+)%s+%(%(([%w_]+)_TypeDef %*%)%s*([%w_]+)%)" do
@@ -110,11 +137,12 @@ end
 
 function doit()
     local f = special(read_file(arg[1]))
+    local exc = exceptions(f)
     local periphs = typedefs(f)
     local base = base_addrs(f)
     print(fmt("( Chip equates for %s)", arg[1]:match "^[%w]+"))
+    vectors(exc)
     instantiate(f, base, periphs)
 end
 
 doit()
-
