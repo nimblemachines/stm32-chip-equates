@@ -58,47 +58,33 @@ end
 function typedefs(f)
     local periphs = {}
     for guts, name in f:gmatch "typedef struct(..-)([%w_]+)_TypeDef;" do
-        local fixedguts = guts:gsub("/%*!<([^*]-) *\n *(.-) *(Address.-)%*/", "/*!<%1 %2 %3*/")
-        --debug(fmt("%s: %s: %s", name, guts, fixedguts))
-        local regs = {}
-        periphs[name] = regs
-        local offset = 0
-        for ctype, name, comment in fixedguts:gmatch "([%w_]+)%s+(%S+);(.-)\n" do
-            comment = prettify_comment(comment)
-            --debug(fmt("%x %s %s", offset, name, comment))
-            local reg = { name = name, offset = offset, comment = comment }
-            local size = 4  -- sanity
-            local bits = ctype:match "uint(%d+)_t"
-            if bits then
-                size = tonumber(bits)/8
-            else
-                local struct = ctype:match "(.+)_TypeDef"
-                if struct then
-                    size = periphs[struct].size
-                    reg.struct = periphs[struct]
+        if not name:match "_IGNORE$" then   -- We ignore these
+            local fixedguts = guts:gsub("/%*!<([^*]-) *\n *(.-) *(Address.-)%*/", "/*!<%1 %2 %3*/")
+            --debug(fmt("%s: %s: %s", name, guts, fixedguts))
+            local regs = {}
+            periphs[name] = regs
+            local offset = 0
+            for bits, name, comment in fixedguts:gmatch "uint(%d+)_t%s+(%S+);(.-)\n" do
+                comment = prettify_comment(comment)
+                --debug(fmt("%x %s %s", offset, name, comment))
+                local reg = { name = name, offset = offset, comment = comment }
+                local size = tonumber(bits)/8
+                local array = name:match "%[(%d+)%]"
+                if array then
+                    array = tonumber(array)
+                    reg.name = reg.name:gsub("%[(%d+)%]", "")
+                    offset = offset + (array * size)
                 else
-                    warn("Hmm. Couldn't figure out size of %s", name)
+                    offset = offset + size
+                end
+                if name:match "RESERVED" then
+                    -- Tell GC to throw it away
+                    reg = nil
+                else
+                    regs[#regs+1] = reg
                 end
             end
-
-            local array = name:match "%[(%d+)%]"
-            if array then
-                array = tonumber(array)
-                reg.array = array   -- number of entries in array
-                reg.size = size     -- size of each
-                reg.name = reg.name:gsub("%[(%d+)%]", "")
-                offset = offset + (array * size)
-            else
-                offset = offset + size
-            end
-            if name:match "RESERVED" then
-                -- Tell GC to throw it away
-                reg = nil
-            else
-                regs[#regs+1] = reg
-            end
         end
-        periphs[name].size = offset
     end
     return periphs
 end
@@ -173,9 +159,11 @@ function bitfields(f)
     end
     table.sort(fields, function(x, y)
         local function index(f)
-            return (f.name:match "%w+_%w+") ..
+            return f.name:match "^(%w+_%w+)" ..
                 -- Sort fields before equates
-                (f.pos and fmt("A%02d", f.pos) or fmt("B%08x", f.equ))
+                -- Fields with same pos will sort by mask
+                (f.pos and fmt("A%02d%08x", f.pos, f.mask) or
+                           fmt("B%08x", f.equ))
         end
         return index(x) < index(y)
     end)
@@ -227,25 +215,16 @@ end
 function instantiate(f, base, periphs)
     local print_reg, print_regs
     print_reg = function(r, pname, subscript, pbase)
-        if r.struct then
-            print_regs(r.struct, pname .. "_" .. r.name .. subscript, pbase + r.offset)
-        else
-            out(fmt("%s equ %-26s %s", muhex(r.offset + pbase),
-                pname .. "_" .. r.name .. subscript, r.comment))
-        end
+        out(fmt("%s equ %-26s %s", muhex(r.offset + pbase),
+            pname .. "_" .. r.name .. subscript, r.comment))
     end
     print_regs = function(regs, pname, pbase)
         for _, r in ipairs(regs) do
-            if r.array then
-                for i = 0, r.array - 1 do
-                    print_reg(r, pname, fmt("%d", i), pbase + (i * r.size))
-                end
-            else
-                print_reg(r, pname, "", pbase)
-            end
+            print_reg(r, pname, "", pbase)
         end
     end
 
+    out "\n( Register addresses)"
     for pname, ptype, pbase in f:gmatch
         "#define%s+([%w_]+)%s+%(%(([%w_]+)_TypeDef %*%)%s*([%w_]+)%)" do
         out ""
@@ -256,6 +235,7 @@ end
 
 function print_bitfields(fields)
     local lastreg = ""
+    out "\n( Register bit fields)"
     for _, f in ipairs(fields) do
         local reg = f.name:match "%w+_%w+"
         if reg ~= lastreg then
@@ -298,13 +278,26 @@ function read_file(fname)
     end
 end
 
+function nicer_chip_name(c)
+    c = c:gsub("x", "@")
+         :upper()
+         :gsub("@", "x")
+    return c
+end
+
+function print_heading(chip)
+    out "( Automagically generated. DO NOT EDIT!"
+    out "  Generated by https://bitbucket.org/nimblemachines/stm32-chip-equates)\n"
+    out(fmt("loading %s equates", chip))
+end
+
 function doit()
     local f = fixes(read_file(arg[1]))
     local exc = exceptions(f)
     local periphs = typedefs(f)
     local fields, fields_by_name = bitfields(f)
     local base = base_addrs(f)
-    out(fmt("( Chip equates for %s)", arg[1]:match "^[%w]+"))
+    print_heading(nicer_chip_name(arg[1]:match "^%w+"))
     vectors(exc)
     instantiate(f, base, periphs)
     print_bitfields(fields)

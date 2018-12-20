@@ -12,7 +12,7 @@ HFILES=		stm32f051x8.h stm32f103xb.h stm32f303xc.h stm32f407xx.h stm32l152xb.h
 
 MUFILES=	$(HFILES:.h=.mu4)
 
-DESTUPIDIFY=	sed -f destupidify.sed
+DESTUPIDIFY=	(tr -d '\r' | sed -f destupidify.sed)
 
 all : $(MUFILES)
 

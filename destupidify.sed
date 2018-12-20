@@ -64,9 +64,9 @@
 
 # Rename unused CAN sub-typedefs so we don't match them..
 
-s/CAN_TxMailBox_TypeDef;/CAN_TxMailBox_UNUSED;/
-s/CAN_FIFOMailBox_TypeDef;/CAN_FIFOMailBox_UNUSED;/
-s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_UNUSED;/
+s/CAN_TxMailBox_TypeDef;/CAN_TxMailBox_IGNORE_TypeDef;/
+s/CAN_FIFOMailBox_TypeDef;/CAN_FIFOMailBox_IGNORE_TypeDef;/
+s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_IGNORE_TypeDef;/
 
 
 # Next is the GPIO. AFR[2] is really AFRL and AFRH.
