@@ -16,16 +16,6 @@ function out(s)
     io.stdout:write(s .. "\n")
 end
 
--- XXX Move these to destupidify.sed ?
--- fixes() changes file contents to make things easier later. See NOTES for
--- explanation(s).
-function fixes(f)
-    f = f:gsub("HRTIM_TypeDef %*", "HRTIM_Master_TypeDef *")
-         :gsub("HRTIM_TIM_TypeDef %*", "HRTIM_Timerx_TypeDef *")
-         :gsub("(uint32_t FR2;%s*/%*!< CAN Filter bank register )(1)( %*/)", "%12%3")
-    return f
-end
-
 function hex(s)
     return tonumber(s, 16)
 end
@@ -293,7 +283,7 @@ function print_heading(chip)
 end
 
 function doit()
-    local f = fixes(read_file(arg[1]))
+    local f = read_file(arg[1])
     local vectors = parse_vectors(f)
     local periphs = parse_typedefs(f)
     local fields = parse_bitfields(f)

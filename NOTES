@@ -39,7 +39,12 @@ since each of the constituent parts gets its own BASE address.
 So the c2forth.lua code should catch this as a special case, ignore
 HRTIM_TypeDef, and just use HRTIM_Master_TypeDef instead.
 
-Or maybe I should edit the .h files, and send a patch to ST?
+Or maybe I should edit the .h files, and send a patch to ST? (Um, yes!!)
 
-Unfortunately, while I've dodged a bullet in the case of HRTIM, the CAN
-typedefs really do nest and really do need to be recursively instantiated.
+-- XXX Move these to destupidify.sed ?
+function fixes(f)
+    f = f:gsub("HRTIM_TypeDef %*", "HRTIM_Master_TypeDef *")
+         :gsub("HRTIM_TIM_TypeDef %*", "HRTIM_Timerx_TypeDef *")
+    return f
+end
+
