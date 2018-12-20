@@ -16,6 +16,7 @@ function out(s)
     io.stdout:write(s .. "\n")
 end
 
+-- XXX Move these to destupidify.sed ?
 -- fixes() changes file contents to make things easier later. See NOTES for
 -- explanation(s).
 function fixes(f)
@@ -40,22 +41,22 @@ end
 -- XXX ST defines the Cortex-M vectors with negative vector indices. Do we
 -- want to keep it this way? Or start the chip-specific ones at 16 instead
 -- of 0?
-function exceptions(f)
-    local exc = {}
+function parse_vectors(f)
+    local vecs = {}
     local guts = f:match "typedef enum(..-)IRQn_Type;"
     if guts then
-        for name, vector, comment in guts:gmatch "([%w_]+)_IRQn%s*=%s*(%-?%d+),(.-)\n" do
+        for name, vector, comment in guts:gmatch "([%w_]+)_IRQn%s*=%s*(%d+),(.-)\n" do
             comment = prettify_comment(comment)
             --debug(fmt("%s %d %s", name, tonumber(vector), comment))
-            exc[#exc+1] = { name = name, vector = vector, comment = comment }
+            vecs[#vecs+1] = { name = name, vector = vector, comment = comment }
         end
     else
         warn("Hmm. No IRQn_Type was found.")
     end
-    return exc
+    return vecs
 end
 
-function typedefs(f)
+function parse_typedefs(f)
     local periphs = {}
     for guts, name in f:gmatch "typedef struct(..-)([%w_]+)_TypeDef;" do
         if not name:match "_IGNORE$" then   -- We ignore these
@@ -90,7 +91,7 @@ function typedefs(f)
 end
 
 -- Match _Pos, _Msk, and comment separately?
-function bitfields(f)
+function parse_bitfields(f)
     local fields = {}           -- array of fields
     local fields_by_name = {}   -- table indexed by field name
     local eval = function(name, expr)
@@ -167,7 +168,7 @@ function bitfields(f)
         end
         return index(x) < index(y)
     end)
-    return fields, fields_by_name
+    return fields
 end
 
 function eval(base, e)
@@ -190,7 +191,7 @@ function eval(base, e)
     warn(fmt("Hmm. Couldn't eval %s", e))
 end
 
-function base_addrs(f)
+function parse_base_addrs(f)
     local base = {}
     for p, expr in f:gmatch "#define%s+([%w_]+_BASE)%s+(..-)\n" do
         --debug(p, expr)
@@ -204,10 +205,10 @@ function muhex(num)
     return fmt("%04x_%04x", num >> 16, num % (2^16))
 end
 
-function vectors(exc)
+function print_vectors(vectors)
     out("\n( Vectors)\ndecimal")
-    for _, e in ipairs(exc) do
-        out(fmt("%3d vector %-20s %s", e.vector, e.name, e.comment))
+    for _, v in ipairs(vectors) do
+        out(fmt("%3d vector %-20s %s", v.vector, v.name, v.comment))
     end
     out("hex")
 end
@@ -293,12 +294,12 @@ end
 
 function doit()
     local f = fixes(read_file(arg[1]))
-    local exc = exceptions(f)
-    local periphs = typedefs(f)
-    local fields, fields_by_name = bitfields(f)
-    local base = base_addrs(f)
+    local vectors = parse_vectors(f)
+    local periphs = parse_typedefs(f)
+    local fields = parse_bitfields(f)
+    local base = parse_base_addrs(f)
     print_heading(nicer_chip_name(arg[1]:match "^%w+"))
-    vectors(exc)
+    print_vectors(vectors)
     instantiate(f, base, periphs)
     print_bitfields(fields)
 end
