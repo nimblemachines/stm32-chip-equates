@@ -12,12 +12,16 @@ HFILES=		stm32f051x8.h stm32f103xb.h stm32f303xc.h stm32f407xx.h stm32l152xb.h
 
 MUFILES=	$(HFILES:.h=.mu4)
 
-CP=	cp -f
+DESTUPIDIFY=	sed -f destupidify.sed
 
 all : $(MUFILES)
 
+hfiles : $(HFILES)
+
 clean :
 	rm -f $(HFILES) $(MUFILES)
+
+$(HFILES) : destupidify.sed
 
 $(HFILES) $(MUFILES) : Makefile
 
@@ -43,23 +47,23 @@ stm32l1xx.h : STM32L1xx_StdPeriph_Lib_V1.3.1/Libraries/CMSIS/Device/ST/STM32L1xx
 
 # For re-programming the ST-LINK?
 stm32f103xb.h : STM32Cube_FW_F1_V1.6.0/Drivers/CMSIS/Device/ST/STM32F1xx/Include/stm32f103xb.h
-	$(CP) $< $@
+	$(DESTUPIDIFY) < $< > $@
 
 # STMF0 Discovery
 stm32f051x8.h : STM32Cube_FW_F0_V1.9.0/Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f051x8.h
-	$(CP) $< $@
+	$(DESTUPIDIFY) < $< > $@
 
 # STMF303 Discovery
 stm32f303xc.h : STM32Cube_FW_F3_V1.10.0/Drivers/CMSIS/Device/ST/STM32F3xx/Include/stm32f303xc.h
-	$(CP) $< $@
+	$(DESTUPIDIFY) < $< > $@
 
 # STMF4 Discovery
 stm32f407xx.h : STM32Cube_FW_F4_V1.21.0/Drivers/CMSIS/Device/ST/STM32F4xx/Include/stm32f407xx.h
-	$(CP) $< $@
+	$(DESTUPIDIFY) < $< > $@
 
 # STM32L Discovery
 stm32l152xb.h : STM32Cube_FW_L1_V1.8.0/Drivers/CMSIS/Device/ST/STM32L1xx/Include/stm32l152xb.h
-	$(CP) $< $@
+	$(DESTUPIDIFY) < $< > $@
 
 %.mu4 : %.h
 	lua c2forth.lua $< > $@
