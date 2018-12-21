@@ -238,7 +238,7 @@ function print_bitfields(fields)
         end
         if f.equ then
             -- Equate, not bit field.
-            out(fmt("      %s equ    %-26s %s", muhex(f.equ), f.name, f.comment))
+            out(fmt("      %s equ   %-26s %s", muhex(f.equ), f.name, f.comment))
         else
             if convert_mask_to_width then
                 -- Convert mask into width
@@ -251,11 +251,11 @@ function print_bitfields(fields)
                 end
 
                 --debug(fmt("mask %08x => width %d", f.mask, width))
-                out(fmt("  #%02d #%02d field  %-26s %s", f.pos, width, f.name,
+                out(fmt("  #%02d #%02d field %-26s %s", f.pos, width, f.name,
                     f.comment or ""))
             else
                 --debug(fmt("%s", f.name))
-                out(fmt("  #%02d %s field  %-26s %s", f.pos, muhex(f.mask), f.name,
+                out(fmt("  #%02d %s field %-26s %s", f.pos, muhex(f.mask), f.name,
                     f.comment or ""))
             end
         end
