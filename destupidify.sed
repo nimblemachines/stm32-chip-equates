@@ -97,6 +97,13 @@ s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_IGNORE_TypeDef;/
   __IO uint32_t IOG8CR;        /*!< TSC I/O group 8 counter register,                         Address offset: 0x50 */
 
 
+# For some reason, some .h files have a bunch of *architectural* stuff still in
+# them. Let's strip this out.
+/ SysTick_/d
+/ NVIC_/d
+/ SCB_/d
+
+
 # Still TODO
 
 # and what's up with the FSMC in the 407?
