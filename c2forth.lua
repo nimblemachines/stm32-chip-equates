@@ -16,10 +16,6 @@ function out(s)
     io.stdout:write(s .. "\n")
 end
 
-function hex(s)
-    return tonumber(s, 16)
-end
-
 function prettify_comment(c)
     c = c:gsub("^%s+$", "")
          :gsub("%s+", " ")
@@ -161,31 +157,42 @@ function parse_bitfields(f)
     return fields
 end
 
-function eval(base, e)
-    e = e:gsub("%(%s*uint32_t%s*%)", "")
-    -- Match basename + offset
-    local b, offset = e:match "([%w_]+_BASE) %+ 0x(%x+)"
-    if b then
-       return base[b] + hex(offset)
-    end
-    -- Match bare basename
-    b = e:match "([%w_]+_BASE)"
-    if b then
-        return base[b]
-    end
-    -- Match bare hex value, with or without enclosing parens
-    local value = e:match "%(?0x(%x+)U?%)?"
-    if value then
-        return hex(value)
-    end
-    warn(fmt("Hmm. Couldn't eval %s", e))
-end
-
 function parse_base_addrs(f)
     local base = {}
+    local eval
+    eval = function (e)
+        -- Remove any casts
+        e = e:gsub("%(%s*uint32_t%s*%)", "")
+
+        -- If the whole expression is enclosed by balanced parens, remove
+        -- the outer ones and re-eval.
+        if e:match "^%b()$" then
+            return eval(e:sub(2, -2))
+        end
+
+        -- Match basename + offset
+        local b, offset = e:match "([%w_]+_BASE) %+ (0x%x+)"
+        if b then
+           return base[b] + tonumber(offset)
+        end
+
+        -- Match bare basename
+        b = e:match "[%w_]+_BASE"
+        if b then
+            return base[b]
+        end
+
+        -- Match bare hex value
+        local value = e:match "0x%x+"
+        if value then
+            return tonumber(value)
+        end
+        warn(fmt("Hmm. Couldn't eval %s", e))
+    end
+
     for p, expr in f:gmatch "#define%s+([%w_]+_BASE)%s+(..-)\n" do
         --debug(p, expr)
-        base[p] = eval(base, expr)
+        base[p] = eval(expr)
         --debug(fmt("%s %x", p, base[p]))
     end
     return base
