@@ -75,6 +75,7 @@ s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_IGNORE_TypeDef;/
   __IO uint32_t AFRL;         /*!< GPIO alternate function low register,  Address offset: 0x20 */\
   __IO uint32_t AFRH;         /*!< GPIO alternate function high register, Address offset: 0x24 */
 
+
 # SYSCFG next.
 #  __IO uint32_t EXTICR[4];   /*!< SYSCFG external interrupt configuration registers, Address offset: 0x14-0x08 */
 /EXTICR\[4\]/c\
@@ -99,9 +100,20 @@ s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_IGNORE_TypeDef;/
 
 # For some reason, some .h files have a bunch of *architectural* stuff still in
 # them. Let's strip this out.
+/ SysTick_IRQn/n
 / SysTick_/d
 / NVIC_/d
 / SCB_/d
+
+
+# Typo/mistaken copy-pasta in stm32f303
+/ADC34_CSR_ADRDY_EOS_SLV/,/ADC34_CSR_ADRDY_JEOC_SLV_Pos/s/ADC12/ADC34/g
+
+
+# Typo/mistaken copy-pasta in stm32f407
+/define CAN_IER_SLKIE/,/define CAN_ESR_EWGF_Pos/{
+/define CAN_IER_EWGIE_Pos/d
+}
 
 
 # Still TODO
