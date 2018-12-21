@@ -24,9 +24,6 @@ function prettify_comment(c)
     return c
 end
 
--- XXX ST defines the Cortex-M vectors with negative vector indices. Do we
--- want to keep it this way? Or start the chip-specific ones at 16 instead
--- of 0?
 function parse_vectors(f)
     local vecs = {}
     local guts = f:match "typedef enum(..-)IRQn_Type;"

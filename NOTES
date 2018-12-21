@@ -47,4 +47,3 @@ function fixes(f)
          :gsub("HRTIM_TIM_TypeDef %*", "HRTIM_Timerx_TypeDef *")
     return f
 end
-
