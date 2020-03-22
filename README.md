@@ -9,8 +9,12 @@ The ["standard peripheral library" zip
 archives](https://www.st.com/content/st_com/en/products/embedded-software/mcus-embedded-software/stm32-embedded-software/stm32-standard-peripheral-libraries.html)
 have been deprecated.
 
-I unzip'd only the <chip>/CMSIS/Device/Include/ directories. There is a lot of
-documentation, sample code, and (binary) libraries in there as well.
+I unzip'd only the
+`STM32Cube_FW_<series>_<version>/Drivers/CMSIS/Device/ST/<chip>/Include/`
+directories. We basically just want the .h files that define the registers and
+bit fields for each chip in the family. There is a lot of documentation,
+sample code, and (binary) libraries in the ZIP archives that we are not
+interested in.
 
 Using Lua I hope to transform these into useful muforth equates.
 
