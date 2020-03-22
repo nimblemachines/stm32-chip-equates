@@ -7,8 +7,8 @@
 
 # ST-LINK chip is an STM32F103C8T6; use stm32f103xb.h
 
-#                  F0 disco       ST-LINK    F303 disco      F4 disco    32L disco
-HFILES=		stm32f051x8.h stm32f103xb.h stm32f303xc.h stm32f407xx.h stm32l152xb.h
+#                  F0 disco    F072B disco    ST-LINK      F303 disco     F4 disco     32L disco
+HFILES=		stm32f051x8.h stm32f072xb.h stm32f103xb.h stm32f303xc.h stm32f407xx.h stm32l152xb.h
 
 MUFILES=	$(HFILES:.h=.mu4)
 
@@ -51,6 +51,10 @@ stm32f103xb.h : STM32Cube_FW_F1_V1.6.0/Drivers/CMSIS/Device/ST/STM32F1xx/Include
 
 # STMF0 Discovery
 stm32f051x8.h : STM32Cube_FW_F0_V1.9.0/Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f051x8.h
+	$(DESTUPIDIFY) < $< > $@
+
+# STMF072B Discovery
+stm32f072xb.h : STM32Cube_FW_F0_V1.9.0/Drivers/CMSIS/Device/ST/STM32F0xx/Include/stm32f072xb.h
 	$(DESTUPIDIFY) < $< > $@
 
 # STMF303 Discovery
