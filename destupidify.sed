@@ -115,6 +115,9 @@ s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_IGNORE_TypeDef;/
 /define CAN_IER_EWGIE_Pos/d
 }
 
+# USB OTG fixes - missing "_" before TypeDef
+s/\(USB_OTG_.*\)\(TypeDef\)/\1_\2/
+
 
 # Still TODO
 
