@@ -3,14 +3,17 @@
 
 fmt = string.format
 
-function logger(prefix)
-    return function(s)
-        io.stderr:write(fmt("%s: %s\n", prefix, s))
+-- Logging and errors
+function logger(class)
+    return function(format, ...)
+        io.stderr:write(fmt("    [%s] "..format.."\n", class, ...))
     end
 end
 
-warn  = logger "Warning"
-debug = logger "Debug"
+debug = logger "DEBUG"
+info  = logger "INFO"
+warn  = logger "WARNING"
+err   = logger "ERROR"
 
 function out(s)
     io.stdout:write(s .. "\n")
@@ -30,7 +33,7 @@ function parse_vectors(f)
     if guts then
         for name, vector, comment in guts:gmatch "([%w_]+)_IRQn%s*=%s*(%d+),(.-)\n" do
             comment = prettify_comment(comment)
-            --debug(fmt("%s %d %s", name, tonumber(vector), comment))
+            --debug("%s %d %s", name, tonumber(vector), comment)
             vecs[#vecs+1] = { name = name, vector = vector, comment = comment }
         end
     else
@@ -44,13 +47,13 @@ function parse_typedefs(f)
     for guts, name in f:gmatch "typedef struct(..-)([%w_]+)_TypeDef;" do
         if not name:match "_IGNORE$" then   -- We ignore these
             local fixedguts = guts:gsub("/%*!<([^*]-) *\n *(.-) *(Address.-)%*/", "/*!<%1 %2 %3*/")
-            --debug(fmt("%s: %s: %s", name, guts, fixedguts))
+            --debug("%s: %s: %s", name, guts, fixedguts)
             local regs = {}
             periphs[name] = regs
             local offset = 0
             for bits, name, comment in fixedguts:gmatch "uint(%d+)_t%s+(%S+);(.-)\n" do
                 comment = prettify_comment(comment)
-                --debug(fmt("%x %s %s", offset, name, comment))
+                --debug("%x %s %s", offset, name, comment)
                 local reg = { name = name, offset = offset, comment = comment }
                 local size = tonumber(bits)/8
                 local array = name:match "%[(%d+)%]"
@@ -100,7 +103,7 @@ function parse_bitfields(f)
     -- "equates" rather than fields. Sometimes the value is 0000_0000 !!
     for name, mask, comment in f:gmatch "([%w_]+)%s+%((0x%x+)U%)%s+(/%*!<.-%*/)" do
         comment = prettify_comment(comment)
-        --debug(fmt("bare: %s %08x %s", name, mask, comment))
+        --debug("bare: %s %08x %s", name, mask, comment)
         local field = { name = name, equ = mask, comment = comment }
         fields_by_name[name] = field
         fields[#fields+1] = field
@@ -109,7 +112,7 @@ function parse_bitfields(f)
     for name, expr in f:gmatch "([%w_]+)_Pos%s+%((.-%d+)U%)" do
         local ok, pos = eval(name, expr)
         if ok then
-            --debug(fmt("%s %s %d", name, expr, pos))
+            --debug("%s %s %d", name, expr, pos)
             if fields_by_name[name] then
                 warn(fmt("Skipping redefinition of bitfield %s with pos %d", name, pos))
             else
@@ -121,7 +124,7 @@ function parse_bitfields(f)
     end
     -- Find masks
     for name, mask in f:gmatch "([%w_]+)_Msk%s+%((0x%x+)U" do
-        --debug(fmt("%s %s", name, mask))
+        --debug("%s %s", name, mask)
         if fields_by_name[name] then
             fields_by_name[name].mask = mask
         else
@@ -131,7 +134,7 @@ function parse_bitfields(f)
     -- Find comments
     for name, name2, comment in f:gmatch "([%w_]+)%s+([%w_]+)_Msk%s+(/%*!<.-%*/)" do
         comment = prettify_comment(comment)
-        --debug(fmt("%s %s %s", name, name2, comment))
+        --debug("%s %s %s", name, name2, comment)
         -- Make sure names match
         if name == name2 then
             if fields_by_name[name] then
@@ -190,7 +193,7 @@ function parse_base_addrs(f)
     for p, expr in f:gmatch "#define%s+([%w_]+_BASE)%s+(..-)\n" do
         --debug(p, expr)
         base[p] = eval(expr)
-        --debug(fmt("%s %x", p, base[p]))
+        --debug("%s %x", p, base[p])
     end
     return base
 end
@@ -223,7 +226,7 @@ function instantiate(f, base, periphs)
     for pname, ptype, pbase in f:gmatch
         "#define%s+([%w_]+)%s+%(%(([%w_]+)_TypeDef %*%)%s*([%w_]+)%)" do
         out ""
-        --debug(fmt("instantiate: %s %s %s", pname, ptype, pbase))
+        --debug("instantiate: %s %s %s", pname, ptype, pbase)
         print_regs(periphs[ptype], pname, base[pbase])
     end
 end
@@ -242,7 +245,7 @@ function print_bitfields(fields)
         else
             if convert_mask_to_width then
                 -- Convert mask into width
-                --debug(fmt("mask = %08x", f.mask))
+                --debug("mask = %08x", f.mask)
                 local width = 0
                 local m = f.mask + 1
                 while m ~= 1 do
@@ -250,11 +253,11 @@ function print_bitfields(fields)
                     width = width + 1
                 end
 
-                --debug(fmt("mask %08x => width %d", f.mask, width))
+                --debug("mask %08x => width %d", f.mask, width)
                 out(fmt("  #%02d #%02d field %-26s %s", f.pos, width, f.name,
                     f.comment or ""))
             else
-                --debug(fmt("%s", f.name))
+                --debug("%s", f.name)
                 out(fmt("  #%02d %s field %-26s %s", f.pos, muhex(f.mask), f.name,
                     f.comment or ""))
             end
