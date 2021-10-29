@@ -31,7 +31,7 @@ function parse_vectors(f)
     local vecs = {}
     local guts = f:match "typedef enum(..-)IRQn_Type;"
     if guts then
-        for name, vector, comment in guts:gmatch "([%w_]+)_IRQn%s*=%s*(%d+),(.-)\n" do
+        for name, vector, comment in guts:gmatch "([%w_]+)_IRQn%s*=%s*(%d+),?(.-)\n" do
             comment = prettify_comment(comment)
             vector = tonumber(vector)
             --debug("%s %d %s", name, vector, comment)
@@ -209,8 +209,19 @@ end
 -- Each vector takes 4 bytes of space.
 function print_vectors(vectors)
     out("\n( Vectors)")
+
+    -- Add a constant so we know how long the vector table is.
+    -- max_vector is one past the last one defined.
+    -- We add 16 to also count the architectural vectors.
+    local max_vector = vectors[#vectors].vector + 1
+    out(fmt("#%d constant #vectors\n", max_vector + 16))
+
     for _, v in ipairs(vectors) do
-        out(fmt("%04x vector %-24s %s", (v.vector + 16) * 4, v.name.."_irq", v.comment))
+        out(fmt("%04x vector %-28s | %2d: %s",
+            (v.vector + 16) * 4,
+            v.name.."_irq",
+            v.vector,
+            v.comment:sub(3)))
     end
 end
 
