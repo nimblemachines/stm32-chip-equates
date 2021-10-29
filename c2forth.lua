@@ -33,7 +33,8 @@ function parse_vectors(f)
     if guts then
         for name, vector, comment in guts:gmatch "([%w_]+)_IRQn%s*=%s*(%d+),(.-)\n" do
             comment = prettify_comment(comment)
-            --debug("%s %d %s", name, tonumber(vector), comment)
+            vector = tonumber(vector)
+            --debug("%s %d %s", name, vector, comment)
             vecs[#vecs+1] = { name = name, vector = vector, comment = comment }
         end
     else
@@ -203,12 +204,14 @@ function muhex(num)
     return fmt("%04x_%04x", num >> 16, num % (2^16))
 end
 
+-- Print vectors as hex offsets from start of vector table. This means we
+-- skip the first 16 vectors - they are defined by the architectural spec.
+-- Each vector takes 4 bytes of space.
 function print_vectors(vectors)
-    out("\n( Vectors)\ndecimal")
+    out("\n( Vectors)")
     for _, v in ipairs(vectors) do
-        out(fmt("%3d vector %-20s %s", v.vector, v.name, v.comment))
+        out(fmt("%04x vector %-24s %s", (v.vector + 16) * 4, v.name.."_irq", v.comment))
     end
-    out("hex")
 end
 
 function instantiate(f, base, periphs)
