@@ -1,22 +1,43 @@
 # Intro
 
-Let's try to take ST's C sources (well, the .h files anyway) and turn them into
-Forth.
+Let's try to take ST's C sources (well, the `.h` files anyway) and turn them
+into Forth.
 
-We are now using the [STM32Cube zip
-files](https://www.st.com/en/embedded-software/stm32cube-mcu-packages.html).
-The ["standard peripheral library" zip
-archives](https://www.st.com/content/st_com/en/products/embedded-software/mcus-embedded-software/stm32-embedded-software/stm32-standard-peripheral-libraries.html)
-have been deprecated.
+Previously I had been downloading various [STM32Cube zip
+files](https://www.st.com/en/embedded-software/stm32cube-mcu-packages.html)
+and pulling the `.h` files out of these. This is awkward and some of the zip
+files were quite large.
 
-I unzip'd only the
-`STM32Cube_FW_<series>_<version>/Drivers/CMSIS/Device/ST/<chip>/Include/`
-directories. We basically just want the .h files that define the registers and
-bit fields for each chip in the family. There is a lot of documentation,
-sample code, and (binary) libraries in the ZIP archives that we are not
-interested in.
+ST has recently decided to modularize their code. Now it is possible to
+download (much smaller) archives of the `.h` and `.s` startup files separately
+from the C library files. Everything is on GitHub now, and the Makefile will
+download and untar the appropriate files.
 
-Using Lua I hope to transform these into useful muforth equates.
+# How to use it
+
+You will need a relatively recent copy of
+[Lua](https://www.lua.org/download.html). It's super easy to build. I like to
+install it in my `$HOME` directory.
+
+Once you have Lua installed, just do this:
+
+```sh
+make download
+make
+```
+
+to download ST's source files from GitHub and then process them into
+(hopefully useful) [muforth](https://muforth.nimblemachines.com/) source files.
+
+Right now the Makefile by default only processes a small subset of the files;
+approximately corresponding to a handful of the Discovery boards. If you have
+a chip that is not in the list, just add its `.h` file to the `HFILES`
+variable; the corresponding `.mu4` file will be made automagically.
+
+I have recently turned off generation of the bitfields. Right now only the
+interrupt vectors and I/O register addresses are generated. Once I figure out
+how I want to deal with the bitfields I will turn that code back on. Feel free
+to play around with it, if you like!
 
 # Mistakes?
 
@@ -37,9 +58,6 @@ fixed version of the file in the root directory. These are the inputs to
 It seems like the comments (with offsets) for the OB typedef in the F103 are
 wrong. But the offsets (that I calculated from the types in the typedef) match
 several of the other parts! Go figure.
-
-The TIM typedef in the STM32F303 .h file was wrong in the "standard peripheral
-lib" version. That has been fixed in the STM32Cube version.
 
 # TODO
 
