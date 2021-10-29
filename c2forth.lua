@@ -38,7 +38,7 @@ function parse_vectors(f)
             vecs[#vecs+1] = { name = name, vector = vector, comment = comment }
         end
     else
-        warn("Hmm. No IRQn_Type was found.")
+        warn "Hmm. No IRQn_Type was found."
     end
     return vecs
 end
@@ -92,11 +92,10 @@ function parse_bitfields(f)
             if fields_by_name[prev] and fields_by_name[prev].pos then
                 return true, fields_by_name[prev].pos + pos
             end
-            warn(fmt("Ignoring %s which depends on undefined bitfield %s!",
-                name, prev))
-                return false, 0
+            warn("Ignoring %s which depends on undefined bitfield %s!", name, prev)
+            return false, 0
         end
-        warn(fmt("Hmm. Can't eval %s", expr))
+        warn("Hmm. Can't eval %s", expr)
         return false, 0
     end
 
@@ -115,7 +114,7 @@ function parse_bitfields(f)
         if ok then
             --debug("%s %s %d", name, expr, pos)
             if fields_by_name[name] then
-                warn(fmt("Skipping redefinition of bitfield %s with pos %d", name, pos))
+                warn("Skipping redefinition of bitfield %s with pos %d", name, pos)
             else
                 local field = { name = name, pos = pos }
                 fields_by_name[name] = field
@@ -129,7 +128,7 @@ function parse_bitfields(f)
         if fields_by_name[name] then
             fields_by_name[name].mask = mask
         else
-            warn(fmt("Skipping mask for missing bitfield %s", name))
+            warn("Skipping mask for missing bitfield %s", name)
         end
     end
     -- Find comments
@@ -141,7 +140,7 @@ function parse_bitfields(f)
             if fields_by_name[name] then
                 fields_by_name[name].comment = comment
             else
-                warn(fmt("Skipping comment for missing bitfield %s", name))
+                warn("Skipping comment for missing bitfield %s", name)
             end
         end
     end
@@ -188,7 +187,7 @@ function parse_base_addrs(f)
         if value then
             return tonumber(value)
         end
-        warn(fmt("Hmm. Couldn't eval %s", e))
+        warn("Hmm. Couldn't eval %s", e)
     end
 
     for p, expr in f:gmatch "#define%s+([%w_]+_BASE)%s+(..-)\n" do
