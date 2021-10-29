@@ -199,6 +199,7 @@ function parse_base_addrs(f)
 end
 
 function muhex(num)
+    num = tonumber(num)     -- make sure it's a number, not a string
     return fmt("%04x_%04x", num >> 16, num % (2^16))
 end
 
