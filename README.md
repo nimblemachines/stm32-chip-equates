@@ -52,7 +52,7 @@ My solution? Using `sed`, of course! I have a sed script - provocatively called
 register names from the reference manual. This is an improvement for C
 programmers too!
 
-The Makefile will process the .h file from one of the `cmsis_device_*_master`
+The Makefile will process the .h file from one of the `cmsis_device_*-master`
 directories, remove the `\r` characters, destupidify it, and create a fixed
 version of the file in the root directory. These are the inputs to
 `c2forth.lua`, which then generates the corresponding `.mu4` file.
