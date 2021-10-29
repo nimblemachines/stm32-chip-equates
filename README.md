@@ -50,9 +50,11 @@ also harder to parse.
 My solution? Using `sed`, of course! I have a sed script - provocatively called
 `destupidify.sed` - that flattens the nested (and broken) typedefs, using the
 register names from the reference manual. This is an improvement for C
-programmers too! The Makefile will process the .h file from one of the
-STM32Cube directories, remove the `\r` characters, destupidify it, and create a
-fixed version of the file in the root directory. These are the inputs to
+programmers too!
+
+The Makefile will process the .h file from one of the `cmsis_device_*_master`
+directories, remove the `\r` characters, destupidify it, and create a fixed
+version of the file in the root directory. These are the inputs to
 `c2forth.lua`, which then generates the corresponding `.mu4` file.
 
 It seems like the comments (with offsets) for the OB typedef in the F103 are

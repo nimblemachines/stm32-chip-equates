@@ -1,7 +1,7 @@
 # Preprocess ST Micro C include (.h) files into Forth.
 
 # Originally used the StdPeriph_Lib sources, then used STM32Cube; now
-# downloading "live" master branches from GitHub!
+# downloading tar archives of "live" master branches from GitHub!
 
 # We are initially targeting a handful of the STM32 Discovery boards, and also
 # the F103 chip that ST uses to power the ST-LINK USB debug interface.
@@ -13,6 +13,10 @@
 HFILES=		stm32f051x8.h stm32f072xb.h stm32f103xb.h stm32f105xc.h
 #                  F303 disco    F4 disco
 HFILES+=	stm32f303xc.h stm32f407xx.h
+
+# After doing "make download", dig around in the cmsis_device_*/Include
+# directories to find the .h files you are interested in, and add them here!
+# HFILES+=
 
 MUFILES=	$(HFILES:.h=.mu4)
 
