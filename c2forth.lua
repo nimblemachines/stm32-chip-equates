@@ -37,6 +37,13 @@ function parse_vectors(f)
             --debug("%s %d %s", name, vector, comment)
             vecs[#vecs+1] = { name = name, vector = vector, comment = comment }
         end
+        -- Create a "dummy" LAST vector so we know where the table ends.
+        local last_vector = vecs[#vecs].vector + 1
+        vecs[#vecs+1] = {
+            name = "LAST",
+            vector = last_vector,
+            comment = "| dummy LAST vector to mark end of vector table"
+        }
     else
         warn "Hmm. No IRQn_Type was found."
     end
@@ -208,12 +215,6 @@ end
 -- Each vector takes 4 bytes of space.
 function print_vectors(vectors)
     out("\n( Vectors)")
-
-    -- Add a constant so we know how long the vector table is.
-    -- max_vector is one past the last one defined.
-    -- We add 16 to also count the architectural vectors.
-    local max_vector = vectors[#vectors].vector + 1
-    out(fmt("#%d constant #vectors\n", max_vector + 16))
 
     for _, v in ipairs(vectors) do
         out(fmt("%04x vector %-28s | %2d: %s",
