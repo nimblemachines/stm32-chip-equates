@@ -16,7 +16,13 @@ HFILES+=	stm32f303xc.h stm32f407xx.h
 
 # After doing "make download", dig around in the cmsis_device_*/Include
 # directories to find the .h files you are interested in, and add them here!
-# HFILES+=
+#HFILES+=
+
+# Path to your Lua 5.3 executable
+LUA=	lua
+
+# Path to "install" .mu4 files. This should be a "muforth" directory.
+INSTALL_DIR=	$(HOME)/muforth
 
 MUFILES=	$(HFILES:.h=.mu4)
 
@@ -26,10 +32,17 @@ all : $(MUFILES)
 
 hfiles : $(HFILES)
 
-.PHONY: clean download download-clean
+.PHONY: clean download download-clean distclean install
 
 clean :
 	rm -f *.h *.mu4
+
+distclean : clean download-clean
+
+# Damn! Having trouble getting make + sh to do what I want, so I'm going to use
+# Lua to generate a series of "cp" commands that the shell can execute!
+install : $(MUFILES)
+	$(LUA) gen-install.lua $(INSTALL_DIR) $(MUFILES) | sh
 
 $(HFILES) : destupidify.sed
 
@@ -63,4 +76,4 @@ download-clean :
 	$(DESTUPIDIFY) < $< > $@
 
 %.mu4 : %.h
-	lua c2forth.lua $< > $@
+	$(LUA) c2forth.lua $< > $@
