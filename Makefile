@@ -6,7 +6,7 @@
 # We are initially targeting a handful of the STM32 Discovery boards, and also
 # the F103 chip that ST uses to power the ST-LINK USB debug interface.
 
-# ST-LINK chip is an STM32F103C8T6; use stm32f103xb.h
+# ST-LINK and Blue Pill chip is an STM32F103C8T6; use stm32f103xb.h
 # GigaDevice GD32VF103 matches STM32F105xC!
 
 #                  F0 disco    F072B disco    ST-LINK      GD32VF103
