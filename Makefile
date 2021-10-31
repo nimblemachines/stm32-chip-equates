@@ -18,7 +18,7 @@ HFILES+=	stm32f303xc.h stm32f407xx.h
 # directories to find the .h files you are interested in, and add them here!
 #HFILES+=
 
-# Path to your Lua 5.3 executable
+# Path to your Lua 5.3 or later executable
 LUA=	lua
 
 # Path to "install" .mu4 files. This should be a "muforth" directory.
