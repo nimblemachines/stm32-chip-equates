@@ -15,8 +15,10 @@ info  = logger "INFO"
 warn  = logger "WARNING"
 err   = logger "ERROR"
 
+-- There are often trailing spaces in the generated code.
+-- Let's remove them here before printing the line.
 function out(s)
-    io.stdout:write(s .. "\n")
+    io.stdout:write(s:gsub(" *$", "") .. "\n")
 end
 
 function prettify_comment(c)
