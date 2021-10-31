@@ -16,8 +16,9 @@ download and untar the appropriate files.
 # How to use it
 
 You will need a relatively recent copy of
-[Lua](https://www.lua.org/download.html). It's super easy to build. I like to
-install it in my `$HOME` directory.
+[Lua](https://www.lua.org/download.html). Version 5.3 or later is required.
+
+Lua is super easy to build. I like to install it in my `$HOME` directory.
 
 Once you have Lua installed, just do this:
 
@@ -28,6 +29,9 @@ make
 
 to download ST's source files from GitHub and then process them into
 (hopefully useful) [muforth](https://muforth.nimblemachines.com/) source files.
+
+You can also do `make install` to copy the generated `.mu4` files into a local
+muforth tree; just set the `INSTALL_DIR` variable in the Makefile.
 
 Right now the Makefile by default only processes a small subset of the files;
 approximately corresponding to a handful of the Discovery boards. If you have
