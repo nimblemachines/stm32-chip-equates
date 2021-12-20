@@ -66,15 +66,16 @@ function parse_typedefs(f)
                 --debug("%x %s %s", offset, name, comment)
                 local reg = { name = name, offset = offset, comment = comment }
                 local size = tonumber(bits)/8
-                local array = name:match "%[(%d+)%]"
+                local array = name:match "%[(%w+)%]"
                 if array then
                     array = tonumber(array)
-                    reg.name = reg.name:gsub("%[(%d+)%]", "")
+                    --debug("matched reg array %s length %d", name, array)
+                    reg.name = reg.name:gsub("%[(%w+)%]", "")
                     offset = offset + (array * size)
                 else
                     offset = offset + size
                 end
-                if name:match "RESERVED" then
+                if name:match "RESERVED" or name:match "Reserved" then
                     -- Tell GC to throw it away
                     reg = nil
                 else

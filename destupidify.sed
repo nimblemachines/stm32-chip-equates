@@ -115,8 +115,26 @@ s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_IGNORE_TypeDef;/
 /define CAN_IER_EWGIE_Pos/d
 }
 
-# USB OTG fixes - missing "_" before TypeDef
+#
+# USB OTG fixes
+# - missing "_" before TypeDef
 s/\(USB_OTG_.*\)\(TypeDef\)/\1_\2/
+
+# fix instantiation of global registers
+s/#define USB_OTG_FS /#define USB/
+
+# fix base addresses of device registers
+/#define USB_OTG_GLOBAL_BASE/,/#define USB_OTG_OUT_ENDPOINT_BASE/c\
+#define USB_OTG_GLOBAL_BASE                  0x50000000UL\
+#define USB_OTG_DEVICE_BASE                  0x50000800UL\
+#define USB_OTG_IN_ENDPOINT_BASE             0x50000900UL\
+#define USB_OTG_OUT_ENDPOINT_BASE            0x50000B00UL
+
+# instantiate USB OTG device registers
+/(USB_OTG_Global_TypeDef \*)/a\
+#define USB   ((USB_OTG_Device_TypeDef *)USB_OTG_DEVICE_BASE)\
+#define USB   ((USB_OTG_INEndpoint_TypeDef *)USB_OTG_IN_ENDPOINT_BASE)\
+#define USB   ((USB_OTG_OUTEndpoint_TypeDef *)USB_OTG_OUT_ENDPOINT_BASE)
 
 
 # Still TODO
