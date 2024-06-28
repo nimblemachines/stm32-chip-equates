@@ -229,14 +229,10 @@ function print_vectors(vectors)
 end
 
 function instantiate(f, base, periphs)
-    local print_reg, print_regs
-    print_reg = function(r, pname, subscript, pbase)
-        out(fmt("%s equ %-26s %s", muhex(r.offset + pbase),
-            pname .. "_" .. r.name .. subscript, r.comment))
-    end
-    print_regs = function(regs, pname, pbase)
+    local print_regs = function(regs, pname, pbase)
         for _, r in ipairs(regs) do
-            print_reg(r, pname, "", pbase)
+            out(fmt("%s equ %-26s %s", muhex(r.offset + pbase),
+                pname .. "_" .. r.name, r.comment))
         end
     end
 
@@ -245,7 +241,11 @@ function instantiate(f, base, periphs)
         "#define%s+([%w_]+)%s+%(%(([%w_]+)_TypeDef %*%)%s*([%w_]+)%)" do
         out ""
         --debug("instantiate: %s %s %s", pname, ptype, pbase)
-        print_regs(periphs[ptype], pname, base[pbase])
+        if periphs[ptype] then
+            print_regs(periphs[ptype], pname, base[pbase])
+        else
+            warn("When instantiating %s, no %s_TypeDef found", pname, pname)
+        end
     end
 end
 
