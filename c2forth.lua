@@ -15,8 +15,10 @@ info  = logger "INFO"
 warn  = logger "WARNING"
 err   = logger "ERROR"
 
--- There are often trailing spaces in the generated code.
--- Let's remove them here before printing the line.
+-- There are often trailing spaces in the generated code. Let's remove them
+-- here before printing the line.
+-- NOTE: Don't replace the literal space with %s (whitespace): some lines
+-- end with newlines that we want to keep!
 function out(s)
     io.stdout:write(s:gsub(" +$", "") .. "\n")
 end
