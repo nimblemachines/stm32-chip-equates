@@ -24,7 +24,7 @@ HFILES+=	stm32c031xx.h
 LUA=	lua
 
 # Path to "install" .mu4 files. This should be a "muforth" directory.
-INSTALL_DIR=	$(HOME)/muforth
+MU_INSTALL_DIR=	$(HOME)/muforth
 
 MUFILES=	$(HFILES:.h=.mu4)
 
@@ -34,17 +34,21 @@ all : $(MUFILES)
 
 hfiles : $(HFILES)
 
-.PHONY: clean download download-clean distclean install
+.PHONY: clean download download-clean distclean muforth-install show-muforth-install
 
 clean :
 	rm -f *.h *.mu4
 
 distclean : clean download-clean
 
-# Damn! Having trouble getting make + sh to do what I want, so I'm going to use
-# Lua to generate a series of "cp" commands that the shell can execute!
-install : $(MUFILES)
-	$(LUA) gen-install.lua $(INSTALL_DIR) $(MUFILES) | sh
+# Damn! Having trouble getting make + sh to do what I want, so I'm going to
+# use Lua to generate a series of commands that the shell can execute!
+muforth-install : $(MUFILES)
+	$(LUA) gen-install.lua $(MU_INSTALL_DIR) $(MUFILES) | sh
+
+# Print out the commands, but don't do anything.
+show-muforth-install : $(MUFILES)
+	$(LUA) gen-install.lua $(MU_INSTALL_DIR) $(MUFILES)
 
 $(HFILES) : destupidify.sed
 
