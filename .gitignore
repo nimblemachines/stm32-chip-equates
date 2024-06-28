@@ -1,5 +1,6 @@
 /*.mu4
 /*.h
+/cmsis_device_c0-main
 /cmsis_device_f0-master
 /cmsis_device_f1-master
 /cmsis_device_f3-master

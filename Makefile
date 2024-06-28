@@ -13,6 +13,8 @@
 HFILES=		stm32f051x8.h stm32f072xb.h stm32f103xb.h stm32f105xc.h
 #                  F303 disco    F4 disco
 HFILES+=	stm32f303xc.h stm32f407xx.h
+#		 C031 nucleo
+HFILES+=	stm32c031xx.h
 
 # After doing "make download", dig around in the cmsis_device_*/Include
 # directories to find the .h files you are interested in, and add them here!
@@ -53,12 +55,15 @@ $(MUFILES) : c2forth.lua
 ### Using live github sources!
 
 download :
-	for family in f0 f1 f3 f4 g0 ; do \
+	for family in c0 f0 f1 f3 f4 g0 ; do \
 		curl -L https://github.com/STMicroelectronics/cmsis_device_$$family/archive/refs/heads/master.tar.gz \
 		| tar xzf - ; done
 
 download-clean :
 	rm -rf cmsis_device*
+
+%.h : cmsis_device_c0-main/Include/%.h
+	$(DESTUPIDIFY) < $< > $@
 
 %.h : cmsis_device_f0-master/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
