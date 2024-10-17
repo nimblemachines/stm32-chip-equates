@@ -94,4 +94,4 @@ download-clean :
 	$(DESTUPIDIFY) < $< > $@
 
 %.mu4 : %.h
-	$(LUA) c2forth.lua $< > $@
+	$(LUA) c2forth.lua $< $(wildcard cmsis*/Include/$<) > $@
