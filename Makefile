@@ -59,17 +59,26 @@ $(MUFILES) : c2forth.lua
 ### Using live github sources!
 
 download :
-	for family in c0 f0 f1 f3 f4 g0 ; do \
+	for family in c0 g0 f0 f1 f3 f4 ; do \
 		curl -L https://github.com/STMicroelectronics/cmsis_device_$$family/archive/refs/heads/master.tar.gz \
 		| tar xzf - ; done
 
 download-clean :
 	rm -rf cmsis_device*
 
-%.h : cmsis_device_c0-main/Include/%.h
+# NOTE! ST occasionally renames these directories! If make fails to find some
+# .h files, make sure that these directories match the *actual* directories
+# that "make download" creates!
+#
+# Note the lame and arbitrary mix of hyphens and underscores!!
+
+%.h : cmsis-device-c0-main/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
 
-%.h : cmsis_device_f0-master/Include/%.h
+%.h : cmsis-device-g0-master/Include/%.h
+	$(DESTUPIDIFY) < $< > $@
+
+%.h : cmsis-device-f0-master/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
 
 %.h : cmsis_device_f1-master/Include/%.h
@@ -79,9 +88,6 @@ download-clean :
 	$(DESTUPIDIFY) < $< > $@
 
 %.h : cmsis_device_f4-master/Include/%.h
-	$(DESTUPIDIFY) < $< > $@
-
-%.h : cmsis_device_g0-master/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
 
 %.mu4 : %.h
