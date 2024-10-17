@@ -64,30 +64,33 @@ download :
 		| tar xzf - ; done
 
 download-clean :
-	rm -rf cmsis_device*
+	rm -rf cmsis*
 
 # NOTE! ST occasionally renames these directories! If make fails to find some
 # .h files, make sure that these directories match the *actual* directories
 # that "make download" creates!
 #
 # Note the lame and arbitrary mix of hyphens and underscores!!
+#
+# To make this automatic, let's use Make's wildcard function to find the
+# *actual* directory name for each subfamily.
 
-%.h : cmsis-device-c0-main/Include/%.h
+%.h : $(wildcard cmsis*c0*)/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
 
-%.h : cmsis-device-g0-master/Include/%.h
+%.h : $(wildcard cmsis*g0*)/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
 
-%.h : cmsis-device-f0-master/Include/%.h
+%.h : $(wildcard cmsis*f0*)/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
 
-%.h : cmsis_device_f1-master/Include/%.h
+%.h : $(wildcard cmsis*f1*)/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
 
-%.h : cmsis_device_f3-master/Include/%.h
+%.h : $(wildcard cmsis*f3*)/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
 
-%.h : cmsis_device_f4-master/Include/%.h
+%.h : $(wildcard cmsis*f4*)/Include/%.h
 	$(DESTUPIDIFY) < $< > $@
 
 %.mu4 : %.h
