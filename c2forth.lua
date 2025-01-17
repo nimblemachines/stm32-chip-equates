@@ -31,6 +31,12 @@ function prettify_comment(c)
     return c
 end
 
+function more_destupidify(f)
+    f = f:gsub("([^_])TypeDef", "%1_TypeDef")
+         :gsub("XSPI_TypeDef", "OCTOSPI_TypeDef")
+    return f
+end
+
 function parse_vectors(f)
     local vecs = {}
     local guts = f:match "typedef enum(..-)IRQn_Type;"
@@ -59,6 +65,7 @@ function parse_typedefs(f)
     for guts, name in f:gmatch "typedef struct(..-)([%w_]+)_TypeDef;" do
         if not name:match "_IGNORE$" then   -- We ignore these
             local fixedguts = guts:gsub("/%*!<([^*]-) *\n *(.-) *(Address.-)%*/", "/*!<%1 %2 %3*/")
+                                  :gsub("(%w) ;", "%1;")    -- "OR1 ;" in H5 TIM_TypeDef, eg
             --debug("%s: %s: %s", name, guts, fixedguts)
             local regs = {}
             periphs[name] = regs
@@ -182,31 +189,41 @@ function parse_base_addrs(f)
             return eval(e:sub(2, -2))
         end
 
-        -- Match basename + offset
-        local b, offset = e:match "([%w_]+_BASE) %+ (0x%x+)"
-        if b then
-           return base[b] + tonumber(offset)
+        -- Match expr + expr
+        local e1, e2 = e:match "(%S+) %+ (%S+)"
+        if e1 then
+            return eval(e1) + eval(e2)
         end
 
-        -- Match bare basename
-        b = e:match "[%w_]+_BASE"
-        if b then
+        -- Match bare basename or size
+        b = e:match "[%w_]+"
+        if b and base[b] then
             return base[b]
         end
 
-        -- Match bare hex value
-        local value = e:match "0x%x+"
+        -- Match bare hex or decimal value.
+        local value = e:match "0x%x+" or e:match "%d+"
         if value then
             return tonumber(value)
         end
+
         warn("Hmm. Couldn't eval %s", e)
+        return 0xdeadbeef
     end
 
-    for p, expr in f:gmatch "#define%s+([%w_]+_BASE)%s+(..-)\n" do
-        --debug(p, expr)
-        base[p] = eval(expr)
-        --debug("%s %x", p, base[p])
+    for p, expr in f:gmatch "#define%s+([%w_]+)%s+(..-)\n" do
+        -- Remove any comment field from expr before evaluating.
+        expr = expr:gsub("/%*.+%*/", "")
+
+        if p:match "_BASE$"
+            or p:match "_BASE_NS$"
+            or p:match "_BASE_S$" then
+            --debug("eval %s = %s", p, expr)
+            base[p] = eval(expr)
+            --debug("set %s = %x", p, base[p])
+        end
     end
+
     return base
 end
 
@@ -241,12 +258,29 @@ function instantiate(f, base, periphs)
     out "\n( Register addresses)"
     for pname, ptype, pbase in f:gmatch
         "#define%s+([%w_]+)%s+%(%(([%w_]+)_TypeDef %*%)%s*([%w_]+)%)" do
-        out ""
-        --debug("instantiate: %s %s %s", pname, ptype, pbase)
-        if periphs[ptype] then
-            print_regs(periphs[ptype], pname, base[pbase])
-        else
-            warn("When instantiating %s, no %s_TypeDef found", pname, pname)
+        if pbase:match "_BASE$" or pbase:match "_BASE_NS$" then
+            -- instantiate bare and non-secure, but skip secure
+            --debug("instantiate: %s %s %s", pname, ptype, pbase)
+            if not periphs[ptype] then
+                warn("When instantiating %s, no %s_TypeDef found", pname, ptype)
+            elseif not base[pbase] then
+                warn("When instantiating %s, no %s address found", pname, pbase)
+            elseif pname:match "SSLIB" then
+                warn("Skipping instantiation of %s", pname)
+            elseif pname:match "^USB_OTG_" then
+                -- USB_OTG isn't fully instantiated by the .h files;
+                -- intervention is necessary. This exists in F105, F107,
+                -- and F4xx devices.
+                warn("Skipping instantiation of %s", pname)
+            else
+                pname = pname:gsub("_NS$", "")
+
+                -- XXX have a list of renames somewhere?
+                pname = pname:gsub("^USB_DRD.*", "USB", 1)
+
+                out ""
+                print_regs(periphs[ptype], pname, base[pbase])
+            end
         end
     end
 end
@@ -316,7 +350,7 @@ hex]]
 end
 
 function doit()
-    local f = read_file(arg[1])
+    local f = more_destupidify(read_file(arg[1]))
     local vectors = parse_vectors(f)
     local periphs = parse_typedefs(f)
     --local fields = parse_bitfields(f)
