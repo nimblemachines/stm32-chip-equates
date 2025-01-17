@@ -76,13 +76,14 @@ s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_IGNORE_TypeDef;/
   __IO uint32_t AFRH;         /*!< GPIO alternate function high register, Address offset: 0x24 */
 
 
-# SYSCFG next.
+# SYSCFG/AFIO/EXTI next.
 #  __IO uint32_t EXTICR[4];   /*!< SYSCFG external interrupt configuration registers, Address offset: 0x14-0x08 */
+#  __IO uint32_t EXTICR[4];      /*!< EXTI External Interrupt Configuration Register,            0x60 -- 0x6C */
 /EXTICR\[4\]/c\
-  __IO uint32_t EXTICR1;     /*!< SYSCFG external interrupt configuration register 1, Address offset: 0x08 */\
-  __IO uint32_t EXTICR2;     /*!< SYSCFG external interrupt configuration register 2, Address offset: 0x0c */\
-  __IO uint32_t EXTICR3;     /*!< SYSCFG external interrupt configuration register 3, Address offset: 0x10 */\
-  __IO uint32_t EXTICR4;     /*!< SYSCFG external interrupt configuration register 4, Address offset: 0x14 */
+  __IO uint32_t EXTICR1;     /*!< external interrupt configuration register 1 */\
+  __IO uint32_t EXTICR2;     /*!< external interrupt configuration register 2 */\
+  __IO uint32_t EXTICR3;     /*!< external interrupt configuration register 3 */\
+  __IO uint32_t EXTICR4;     /*!< external interrupt configuration register 4 */
 
 
 # We're on a roll! How about the TSC?
@@ -100,10 +101,10 @@ s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_IGNORE_TypeDef;/
 
 # For some reason, some .h files have a bunch of *architectural* stuff still in
 # them. Let's strip this out.
-/ SysTick_IRQn/n
-/ SysTick_/d
-/ NVIC_/d
-/ SCB_/d
+#/ SysTick_IRQn/n
+#/ SysTick_/d
+#/ NVIC_/d
+#/ SCB_/d
 
 
 # Typo/mistaken copy-pasta in stm32f303
@@ -115,13 +116,8 @@ s/CAN_FilterRegister_TypeDef;/CAN_FilterRegister_IGNORE_TypeDef;/
 /define CAN_IER_EWGIE_Pos/d
 }
 
-#
-# USB OTG fixes
-# - missing "_" before TypeDef
+# missing "_" before TypeDef
 s/\(USB_OTG_.*\)\(TypeDef\)/\1_\2/
-
-# fix instantiation of global registers
-s/#define USB_OTG_FS /#define USB/
 
 # fix base addresses of device registers
 /#define USB_OTG_GLOBAL_BASE/,/#define USB_OTG_OUT_ENDPOINT_BASE/c\
@@ -130,8 +126,15 @@ s/#define USB_OTG_FS /#define USB/
 #define USB_OTG_IN_ENDPOINT_BASE             0x50000900UL\
 #define USB_OTG_OUT_ENDPOINT_BASE            0x50000B00UL
 
+# XXX Should rename this in c2forth.lua, and also do it for the new
+# host/device USB device, which is called USB_
+# fix instantiation of global registers
+#s/#define USB_OTG_FS /#define USB/
+
 # instantiate USB OTG device registers
-/(USB_OTG_Global_TypeDef \*)/a\
+# XXX actually, this isn't this simple, depending on what the user wants to
+# do. I'm going to leave these as is for now.
+#/(USB_OTG_Global_TypeDef \*)/a\
 #define USB   ((USB_OTG_Device_TypeDef *)USB_OTG_DEVICE_BASE)\
 #define USB   ((USB_OTG_INEndpoint_TypeDef *)USB_OTG_IN_ENDPOINT_BASE)\
 #define USB   ((USB_OTG_OUTEndpoint_TypeDef *)USB_OTG_OUT_ENDPOINT_BASE)
