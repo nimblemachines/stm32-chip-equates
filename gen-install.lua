@@ -7,10 +7,10 @@ for i,a in ipairs(arg) do
     else
         src = a
         family, partnum, package, flash_size = a:match "stm32(%w%d)(%d%d)(%w)(%w)"
-        destdir = stm32dir .. family .. "/"
-        destfile = string.format("%s_%s-equates.mu4", partnum, flash_size)
+        destdir = stm32dir .. family .. "/" .. partnum .. "_" .. flash_size
+        --destfile = string.format("%s_%s/equates.mu4", partnum, flash_size)
 
         print(string.format("mkdir -p %s", destdir))
-        print(string.format("cp -f %s %s", src, destdir .. destfile))
+        print(string.format("cp -f %s %s/equates.mu4", src, destdir))
     end
 end
